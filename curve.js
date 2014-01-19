@@ -1305,7 +1305,7 @@ Curve25519.prototype.genShared = curve25519_genShared;
 Curve25519.prototype.sign = curve25519_sign;
 Curve25519.prototype.verify = curve25519_verify;
 
-function Crypto()
+function CryptoImpl()
 {
 	this.c = new Curve25519();
 }
@@ -1359,7 +1359,74 @@ function crypto_verify(sig, message, key)
 	return h_verify.equals(sigH);
 }
 
-Crypto.prototype.getPublicKey = crypto_getPublicKey;
-Crypto.prototype.sign = crypto_sign;
-Crypto.prototype.verify = crypto_verify;
+CryptoImpl.prototype.getPublicKey = crypto_getPublicKey;
+CryptoImpl.prototype.sign = crypto_sign;
+CryptoImpl.prototype.verify = crypto_verify;
+
+function Crypto()
+{
+	this.impl = new CryptoImpl();
+}
+
+function hexToBytes(hexString)
+{
+	var i;
+	var r=[];
+	// will be slightly faster than parseInt
+	for (i=0; i<hexString.length; i+=2) {
+		var h=hexString.charCodeAt(i);
+		var l=hexString.charCodeAt(i+1);
+
+		if (h >= 48 && h <= 57) { h -= 48;
+		} else if (h >= 97 && h <= 102) { h -= 87;
+		} else if (h >= 65 && h <= 70) { h -= 55;
+		} else {
+			throw 'bad format of hexstring: '+hexString;
+		}
+		if (l >= 48 && l <= 57) { l -= 48;
+		} else if (l >= 97 && l <= 102) { l -= 87;
+		} else if (l >= 65 && l <= 70) { l -= 55;
+		} else {
+			throw 'bad format of hexstring: '+hexString;
+		}
+
+		r.push(h*16 + l);
+	}
+	return r;
+}
+
+function bytesToHex(byteArray)
+{
+	var alphabet="0123456789abcdef";
+	var i;
+	var hexString=[];
+	for (i=0; i<byteArray.length; i++) {
+		hexString[2*i   ] = alphabet[(byteArray[i]>>>4)];
+		hexString[2*i +1] = alphabet[(byteArray[i]&0xf)];
+	}
+	return hexString.join('');
+}
+
+Crypto.prototype.sign = function(pass, message)
+{
+	var p = hexToBytes(pass);
+	var m = hexToBytes(message);
+
+	return bytesToHex(this.impl.sign(p, m).sig);
+}
+
+Crypto.prototype.verify = function(signature, message, signersPublicKey)
+{
+	var s = new Uint8Array(hexToBytes(signature));
+	var m = hexToBytes(message);
+	var k = new Uint8Array(hexToBytes(signersPublicKey));
+
+	return this.impl.verify(s, m, k);
+}
+
+Crypto.prototype.getPublicKey = function(pass)
+{
+	var p = hexToBytes(pass);
+	return bytesToHex(this.impl.getPublicKey(p));
+}
 

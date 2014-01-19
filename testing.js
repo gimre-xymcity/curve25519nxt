@@ -37,7 +37,7 @@ function curveSelfTest()
 
 function test1()
 {
-	var c = new Crypto();
+	var c = new CryptoImpl();
 	// 'nxt'
 	var privKey = new Key25519([110, 120, 116]);
 	var message = new Uint8Array([87, 104, 97, 116, 32, 103, 111, 101, 115, 32, 114, 111, 117, 110, 100, 44, 32, 99, 111, 109, 101, 115, 32, 97, 114, 111, 117, 110, 100, 46]);
@@ -69,7 +69,7 @@ function test2()
 	}
 
 	var sigs = [];
-	var c = new Crypto();
+	var c = new CryptoImpl();
 	console.log('doing 20 signs');
 	console.time('sigs20');
 	for (i = 0; i < 20; ++i) {
@@ -141,11 +141,12 @@ function test3jaguar()
 
 function test4jaguar()
 {
-	var c = new Crypto();
-	console.time('testCryptoKey');
-	for (i = 0; i < testCryptoKey.length; ++i)
+	var c = new CryptoImpl();
+	var i;
+	console.time('testCryptoImplKey');
+	for (i = 0; i < testCryptoImplKey.length; ++i)
 	{
-		var rec = testCryptoKey[i];
+		var rec = testCryptoImplKey[i];
 		var p = rec.p;
 		var res = c.getPublicKey(p);
 		if (! res.equals(rec.k)) {
@@ -153,11 +154,11 @@ function test4jaguar()
 			break;
 		}
 	}
-	console.timeEnd('testCryptoKey');
-	console.time('testCryptoSign');
-	for (i = 0; i < testCryptoSign.length; ++i)
+	console.timeEnd('testCryptoImplKey');
+	console.time('testCryptoImplSign');
+	for (i = 0; i < testCryptoImplSign.length; ++i)
 	{
-		var rec = testCryptoSign[i];
+		var rec = testCryptoImplSign[i];
 		var p = rec.p;
 		var m = rec.m;
 		var res = c.sign(p, m);
@@ -166,7 +167,55 @@ function test4jaguar()
 			break;
 		}
 	}
-	console.timeEnd('testCryptoSign');
+	console.timeEnd('testCryptoImplSign');
+}
+
+function testHex()
+{
+	var i;
+	var inp = "7c3ff12215636a7b246dea25d5e446a91fa59a9150c6ed50d8126ee86a648b68";
+	var res = hexToBytes(inp);
+	var r2 = bytesToHex(res);
+
+	if (inp != r2) {
+		throw "bytesToHex/hexToBytes error";
+	}
+}
+
+function testCrypto()
+{
+	var c = new Crypto();
+	var i;
+
+	// 'nxt'
+	var privKey = '6e7874';
+	var message = '5768617420676f657320726f756e642c20636f6d65732061726f756e642e';
+	console.time('100x sign+verify time');
+	console.time('100x sign time');
+	var sigPub;
+	for (i=0; i<100; ++i) {
+		sigPub = c.sign(privKey, message);
+	}
+	console.timeEnd('100x sign time');
+
+	var key = c.getPublicKey(privKey);
+
+	console.time('100x verify time');
+	var isOk;
+	for (i=0; i<100; ++i) {
+		isOk = c.verify(sigPub, message, key);
+	}
+	console.timeEnd('100x verify time');
+	console.timeEnd('100x sign+verify time');
+
+	console.log(' verified? ', isOk);
+	
+	var pk='7c3ff12215636a7b246dea25d5e446a91fa59a9150c6ed50d8126ee86a648b68';
+	var msg='0000a9d63800a0057c3ff12215636a7b246dea25d5e446a91fa59a9150c6ed50d8126ee86a648b687e2fad81dbf18f2da086010064000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000';
+	var sig='4f0626ccd4edebb17e9d06e928b5b4e944aa7ef88a111081919794a3e265c206f9d9b0ce42a8d2e7f6d902a172159bcd39dcaab8468373258fccea9e5d2ed319'
+
+	var isOk = c.verify(sig, msg, pk);
+	console.log(' verified', isOk);
 }
 
 function testEc()
@@ -178,6 +227,9 @@ function testEc()
 	test2();
 	test3jaguar();
 	test4jaguar();
+	testHex();
+
+	testCrypto();
 }
 
 window.onload = testEc;
