@@ -208,14 +208,23 @@ function testCrypto()
 	console.timeEnd('100x verify time');
 	console.timeEnd('100x sign+verify time');
 
-	console.log(' verified? ', isOk);
+	console.log(' verify result: ', isOk);
 	
 	var pk='7c3ff12215636a7b246dea25d5e446a91fa59a9150c6ed50d8126ee86a648b68';
 	var msg='0000a9d63800a0057c3ff12215636a7b246dea25d5e446a91fa59a9150c6ed50d8126ee86a648b687e2fad81dbf18f2da086010064000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000';
 	var sig='4f0626ccd4edebb17e9d06e928b5b4e944aa7ef88a111081919794a3e265c206f9d9b0ce42a8d2e7f6d902a172159bcd39dcaab8468373258fccea9e5d2ed319'
 
 	var isOk = c.verify(sig, msg, pk);
-	console.log(' verified', isOk);
+	console.log(' verify result: ', isOk);
+
+	var privKey = '6e7874';
+	var message = '5768617420676f657320726f756e642c20636f6d65732061726f756e642e';
+	var sigPub = 'b4cafe10e21676c4642354cba102243f0138b798af689ea51576a77b9013790b2b9d6470737f748e4bf449eecfee790f483dd894f17bf9a287120b6906228746';
+
+	var key = c.getPublicKey(privKey);
+
+	var isOk = c.verify(sigPub, message, key);
+	console.log(' verify result: ', isOk);
 }
 
 function testEc()
